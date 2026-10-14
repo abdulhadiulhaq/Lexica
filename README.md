@@ -1,0 +1,2 @@
+# Lexica
+DSA - Lab Project
