@@ -1,0 +1,11 @@
+Module 3: Query & Ranking Engine
+
+    Job: Takes user input, searches the index built by Module 2, and ranks the results so the most relevant documents appear at the top.
+
+    How it ranks:
+
+        Counts how many times the search term appears in each matching document (Term Frequency).
+
+        Uses a Max-Heap / Priority Queue to keep the top 5 or top 10 highest-scoring documents at the very top.
+
+    Output: Prints the ranked search results nicely to the terminal interface.

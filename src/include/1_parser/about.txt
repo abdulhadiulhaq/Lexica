@@ -1,0 +1,11 @@
+Module 1: Document Reader & Text Cleaner
+
+    Job: Reads raw .txt files from a folder and turns long strings of text into clean lists of words.
+
+    What it does step-by-step:
+        Opens file doc1.txt.
+        Converts all letters to lowercase ("Cat" $\rightarrow$ "cat").
+        Removes punctuation ("hello!" $\rightarrow$ "hello").
+        Filters out useless filler words like "the", "is", "at" (called stop words).
+
+    Output: Clean word tokens sent to Module 2.

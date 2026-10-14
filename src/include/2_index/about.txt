@@ -1,0 +1,9 @@
+Module 2: The Core Storage (Inverted Index)
+
+    Job: Takes the clean words from Module 1 and saves them inside your custom data structure.
+
+    Data Structure Options:
+        Option A (Trie / Prefix Tree): A tree structure where each node is a letter. Walking down the tree spells a word, and the leaf node stores which document IDs contain that word.
+        Option B (Custom Hash Table): Map each word string to a custom Linked List of Document IDs and word counts.
+
+    Output: An in-memory data structure ready to perform $O(1)$ or $O(length\_of\_word)$ lookups.
