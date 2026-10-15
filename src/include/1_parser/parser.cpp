@@ -4,7 +4,6 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <algorithm>
 #include <filesystem>
 #include <unordered_set>
 using namespace std;
@@ -21,6 +20,7 @@ class Parser {
     private:
         unordered_set<string> stopWords;
 
+        // helper method to load words into stopWords hashmap
         bool loadStopWords(const filesystem::path& stopWordsFilePath){
             if (!filesystem::exists(stopWordsFilePath)){
                 cerr << "[!] Could not open stop words file: " << stopWordsFilePath << "\n";
@@ -42,7 +42,7 @@ class Parser {
             return false;                                   // will never reach here ideally
         }
 
-        // Helper method to clean, tokenize, and map words
+        // helper method to clean, tokenize, and map words
         vector<string> cleanAndTokenize(const string& rawText) {
             string         cleanedText = "";
             vector<string> tokens;
@@ -58,36 +58,36 @@ class Parser {
                 }
 
             // split words by spaces and filter out stop words & remove those below length 2
+                string       word;
                 stringstream ssCleanedText(cleanedText);
-                string word;
+
                 while (ssCleanedText >> word) {
-                    if ((word.length() > 1) && (stopWords.find(word) == stopWords.end())) {
+                    if ((word.length() > 1) && (stopWords.find(word) == stopWords.end()))
                         tokens.push_back(word);
-                    }
                 }
 
             return tokens;
         }
 
-        // Helper method to parse a single file and return tokens as Word structs
+        // helper method to parse a single file and return tokens as Word structs
         vector<Word> parseSingleFile(const filesystem::path& filePath) {
             vector<Word> fileWords;
+
             ifstream file(filePath);
-            if (!file.is_open()) {
+            if (!file){
                 cerr << "[Error] Could not open file: " << filePath.string() << "\n";
                 return fileWords;
             }
 
             stringstream buffer;
-            buffer << file.rdbuf();
+            buffer << file.rdbuf();                 // reading whole file at once
             file.close();
 
-            vector<string> tokens = cleanAndTokenize(buffer.str());
-            string docName = filePath.filename().string();
+            string         docName = filePath.filename().string();
+            vector<string> tokens  = cleanAndTokenize(buffer.str());
 
-            for (const string& token : tokens) {
+            for (const auto& token : tokens)
                 fileWords.push_back({token, docName});
-            }
 
             return fileWords;
         }
@@ -95,12 +95,12 @@ class Parser {
     public:
         // Constructor: Loads stop words from the comma-separated CSV file
         Parser(const filesystem::path& stopWordsFilePath){
-
+            if (!loadStopWords(stopWordsFilePath))  return;
         }
 
-        // Main method: Takes an input path (file or directory) and returns all parsed Word structs
+        // main method: Takes an input path (file or directory) and returns all parsed Word structs
         vector<Word> parse(const string& inputPath) {
-            vector<Word> allParsedWords;
+            vector<Word>     allParsedWords;
             filesystem::path path(inputPath);
 
             if (!filesystem::exists(path)) {
@@ -130,7 +130,7 @@ class Parser {
         }
 };
 
-// --- Example Test Driver (`main`) ---
+
 int main() {
     // Initialize Parser with stop words
     Parser parser("stop_words.csv");
@@ -142,6 +142,4 @@ int main() {
     for (size_t i = 0; i < min(size_t(5), parsedData.size()); ++i) {
         cout << "-> Word: \"" << parsedData[i].text << "\" | Doc Name: \"" << parsedData[i].docName << "\"\n";
     }
-
-    return 0;
 }

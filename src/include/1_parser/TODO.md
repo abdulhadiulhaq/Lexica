@@ -1,0 +1,2 @@
+- make ur own hashmap class
+- make ur own vectors class
