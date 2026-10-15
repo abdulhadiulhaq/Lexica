@@ -66,3 +66,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+
+TODO.txt
+todo.txt
+about.txt
