@@ -66,3 +66,11 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Editor settings
+.vscode/
+.idea/
+
+# Large corpus (keep only data/sample/ in git)
+data/
+books/ 
