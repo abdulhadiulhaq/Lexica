@@ -72,5 +72,4 @@ Testing/
 .idea/
 
 # Large corpus (keep only data/sample/ in git)
-data/
 books/ 
