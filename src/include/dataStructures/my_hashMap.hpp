@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+using std::string;
 
 typedef long long size_t;
 
@@ -25,7 +26,7 @@ class MyHashMap
         size_t     capacity;
         size_t     size;
 
-        unsigned long hashFunction(const std::string& str) const 
+        unsigned long hashFunction(const string& str) const 
         {
             unsigned long hash = 5381;
             
