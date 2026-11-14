@@ -1,88 +1,103 @@
 #pragma once
 
-#include <string>
-#include <cmath>
-#include "../../1_ds/1_vector.hpp"
-#include "index.hpp"
 
+#include <string>                                       // for string
+#include <cmath>                                        // for log
+#include "../../1_ds/1_vector.hpp"                      // for MyVector
+#include "4_invertedIndex.hpp"                          // for InvertedIndex and Posting
+using std::string;
+
+
+// a struct representing a search result containing docID and final ranking score
 struct SearchResult 
 {
-    int    doc_id;
+    int    docID;
     double score;
 
     SearchResult() 
-        : doc_id(0)
+        : docID(0)
         , score(0.0) 
         {}
 
     SearchResult(int id, double s) 
-        : doc_id(id)
+        : docID(id)
         , score(s) 
         {}
 
-    bool operator<(const SearchResult& other) const 
+    inline bool operator<(const SearchResult& other) const 
     {
         return score < other.score;
     }
 };
 
+
+// a ranker class to compute TF-IDF scores and rank documents for a given query
 class Ranker 
 {
     public:
-        static inline MyVector<SearchResult> rankQuery(
-            const MyVector<std::string>& query_tokens,
+        Ranker() 
+            {}
+
+        // ranks documents against query tokens using TF-IDF and returns the top-k results
+        inline static MyVector<SearchResult> rankQuery(
+            const MyVector<string>& queryTokens,
             const InvertedIndex& index,
-            int total_docs,
-            int top_k = 5) 
+            size_t totalDocs,
+            size_t topK = 5) 
         {
             MyVector<SearchResult> results;
-            if (total_docs == 0 || query_tokens.empty()) 
+
+            if (totalDocs == 0 || queryTokens.empty()) 
             {
                 return results;
             }
 
-            // Allocate score accumulator array for all document IDs (1-indexed)
-            double* scores = new double[total_docs + 1]();
+            // allocate score accumulator array for all document IDs (1-indexed)
+            auto* scores {new double[totalDocs + 1]()};
 
-            for (auto i {0}; i < query_tokens.size(); ++i) 
+            for (auto i {0}; i < queryTokens.size(); ++i) 
             {
-                std::string term = query_tokens[i];
+                string term = queryTokens[i];
                 MyVector<Posting> postings;
+
                 if (index.getPostings(term, postings)) 
                 {
-                    int df = static_cast<int>(postings.size());
+                    auto df {postings.size()};
                     if (df == 0) continue;
 
                     // IDF formula: ln(1 + (Total Docs / Document Frequency))
-                    double idf = std::log(1.0 + (static_cast<double>(total_docs) / static_cast<double>(df)));
+                    auto idf {std::log(1.0 + (static_cast<double>(totalDocs) / static_cast<double>(df)))};
 
                     for (auto j {0}; j < postings.size(); ++j) 
                     {
-                        const Posting& p = postings[j];
-                        if (p.doc_id >= 1 && p.doc_id <= total_docs) 
+                        const auto& p {postings[j]};
+
+                        if (p.docID >= 1 && static_cast<size_t>(p.docID) <= totalDocs) 
                         {
-                            double tf = static_cast<double>(p.term_freq);
-                            scores[p.doc_id] += (tf * idf);
+                            auto tf {static_cast<double>(p.termFreq)};
+                            scores[p.docID] += (tf * idf);
                         }
                     }
                 }
             }
 
-            // Collect all documents with a score > 0
-            for (int id = 1; id <= total_docs; ++id) 
+            // collect all documents with a score > 0.0
+            for (size_t id {1}; id <= totalDocs; ++id) 
             {
                 if (scores[id] > 0.0) 
                 {
-                    results.push_back(SearchResult(id, scores[id]));
+                    results.push_back(SearchResult(static_cast<int>(id), scores[id]));
                 }
             }
+
             delete[] scores;
 
-            // Sort results descending by score (Simple Insertion Sort)
+            // sort results descending by score using insertion sort
             for (auto i {1}; i < results.size(); ++i) 
             {
-                SearchResult key = results[i];
-                long long j = i - 1;
+                auto key {results[i]};
+                long long j = static_cast<long long>(i) - 1;
+
                 while (j >= 0 && results[j].score < key.score) 
                 {
                     results[j + 1] = results[j];
@@ -91,14 +106,15 @@ class Ranker
                 results[j + 1] = key;
             }
 
-            // Truncate to top_k
-            MyVector<SearchResult> top_results;
-            size_t limit = (results.size() < static_cast<size_t>(top_k)) ? results.size() : static_cast<size_t>(top_k);
+            // truncate to topK
+            MyVector<SearchResult> topResults;
+            auto limit {(results.size() < topK) ? results.size() : topK};
+
             for (auto i {0}; i < limit; ++i) 
             {
-                top_results.push_back(results[i]);
+                topResults.push_back(results[i]);
             }
 
-            return top_results;
+            return topResults;
         }
 };
