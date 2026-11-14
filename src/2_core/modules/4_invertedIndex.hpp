@@ -1,91 +1,94 @@
 #pragma once
 
-#include <string>
-#include "../include/dataStructures/my_vector.hpp"
-#include "../include/dataStructures/my_hashMap.hpp"
 
-#include <csdt
+#include <string>                                       // for string
+#include <cstddef>                                      // for size_t
+#include "../../1_ds/1_vector.hpp"                      // for MyVector
+#include "../../1_ds/4_hashMap.hpp"                     // for MyHashMap
+using std::string;
 
+
+// a struct representing a document posting containing docID, token frequency, and score
 struct Posting 
 {
-    int    doc_id;
-    int    term_freq;
-    double tf_idf_score;
+    int    docID;                                   // id of the doc
+    int    freq;                                    // the num of times that word comes in the doc
+    double tf_idf_score;                            // the tfIDF score of that word in the doc
 
     Posting() 
-        : doc_id(0)
-        , term_freq(0)
+        : docID(0)
+        , freq(0)
         , tf_idf_score(0.0) 
         {}
 
-    Posting(int id, int freq) 
-        : doc_id(id)
-        , term_freq(freq)
+    Posting(const int id, const int freq) 
+        : docID(id)
+        , freq(freq)
         , tf_idf_score(0.0) 
         {}
 
-    bool operator<(const Posting& other) const 
-    {
+    // an overloaded < operator to compare 2 postings based on their tf_idf scores
+    inline bool operator<(const Posting& other) const {
         return tf_idf_score < other.tf_idf_score;
     }
 };
 
+
+// an inverted index class mapping terms to posting lists using a custom hashMap
 class InvertedIndex 
 {
     private:
-        MyHashMap<std::string, MyVector<Posting>> index;
-        int total_documents;
+        MyHashMap<string, MyVector<Posting>> index;
+        size_t                               totalDocuments;
 
     public:
         InvertedIndex() 
-            : total_documents(0) 
+            : totalDocuments(0) 
             {}
 
-        inline void addDocument(int doc_id, const MyVector<std::string>& tokens) 
+        // adds a document's tokens to the inverted index
+        inline void addDocument(const int docID, const MyVector<string>& tokens) 
         {
-            total_documents++;
+            ++totalDocuments;
 
-            MyHashMap<std::string, bool> processed;
-            for (auto i {0}; i < tokens.size(); ++i) 
+            MyHashMap<string, bool> processed;                          // ie effectively a hashSet
+
+            for (const auto& token : tokens)
             {
-                std::string term = tokens[i];
-                bool dummy = false;
-                if (!processed.get(term, dummy)) 
-                {
-                    processed.insert(term, true);
-                    
-                    // Count frequency of term in token list
-                    int freq = 0;
-                    for (auto j {0}; j < tokens.size(); ++j) 
-                    {
-                        if (tokens[j] == term) freq++;
-                    }
+                auto dummy {false};
 
-                    Posting posting(doc_id, freq);
-                    
-                    MyVector<Posting> postings_list;
-                    if (index.get(term, postings_list)) 
-                    {
-                        postings_list.push_back(posting);
-                        index.insert(term, postings_list);
+                if (!processed.get(token, dummy)) 
+                {
+                    processed.insert(token, true);                          // inserting the token into the hashSet if it no existed
+
+                    // count the frequency of the token in the token list
+                    auto freq {0};
+                    for (const auto& t : tokens)
+                        if (t == token) ++freq;
+
+                    Posting posting(docID, freq);
+                    MyVector<Posting> postingsList;
+
+                    if (index.get(token, postingsList)) {                       // if the token is alr in the index, updates its postingsList
+                        postingsList.push_back(posting);                        // updating the postingsList
+                        index.insert(token, postingsList);                      // reinserting the updated list into the hashMap/index
                     } 
-                    else 
-                    {
-                        MyVector<Posting> new_list;
-                        new_list.push_back(posting);
-                        index.insert(term, new_list);
+                    else {                                                      // the token and its postingsList wasnt in the index
+                        MyVector<Posting> newList;
+                        newList.push_back(posting);
+                        index.insert(token, newList);                           // inserts newly-formed list into the index for the given token
                     }
                 }
             }
         }
 
-        inline bool getPostings(const std::string& term, MyVector<Posting>& out_postings) const 
-        {
-            return index.get(term, out_postings);
+        // retrieves the posting list for a given search token, returning true if found
+        inline bool getPostings(const string& token, MyVector<Posting>& outPostings) const {
+            return index.get(token, outPostings);
         }
 
-        inline int getTotalDocuments() const 
-        {
-            return total_documents;
+        // returns the total number of docs indexed
+        inline size_t getTotalDocuments() const {
+            return totalDocuments;
         }
 };
