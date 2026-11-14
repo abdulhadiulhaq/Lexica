@@ -1,43 +1,54 @@
 #pragma once
 
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <filesystem>
-#include "my_vector.hpp"
 
-typedef long long size_t;
+#include <string>                                           // for string
+#include <fstream>                                          // for ifstream
+#include <sstream>                                          // for stringstream
+#include <filesystem>                                       // for filesystem
+#include "../../1_ds/1_vector.hpp"                          // for MyVector
+using std::string, std::ifstream, std::stringstream;
+namespace fs = std::filesystem;
 
+
+// a struct representing a loaded document from disk
 struct Document 
 {
-    int         doc_id;
-    std::string filename;
-    std::string content;
+    int    docID;
+    string fileName;
+    string content;
+
+    Document(const int id, const string& name, const string& text) 
+        : docID(id)
+        , fileName(name)
+        , content(text) 
+        {}
 };
 
+
+// a file loader class to scan and parse text documents from a directory
 class FileLoader 
 {
     public:
-        static MyVector<Document> loadDirectory(const std::string& dir_path) 
+        FileLoader() 
+            {}
+
+        // scans a directory and loads all .txt files into a custom MyVector of Documents
+        inline static MyVector<Document> loadDirectory(const string& dirPath) 
         {
-            MyVector<Document> documents;
-            int current_id = 1;
+            MyVector<Document> documents;                                                   // making a vector of Document nodes
+            auto currentID {1};
 
-            for (const auto& entry : std::filesystem::directory_iterator(dir_path)) 
+            for (const auto& entry : fs::directory_iterator(dirPath))                       // iterates through every object in the directory
             {
-                if (entry.is_regular_file() && entry.path().extension() == ".txt") 
+                if (entry.is_regular_file() && (entry.path().extension() == ".txt"))        // checking if the entry is a text file
                 {
-                    std::ifstream file(entry.path());
-                    if (file.is_open()) 
-                    {
-                        std::stringstream buffer;
-                        buffer << file.rdbuf();
+                    ifstream file(entry.path());                                            // opening the file in read-mode
+                    
+                    if (file) {
+                        stringstream buffer;
+                        buffer << file.rdbuf();                                             // reading the whole contents of the file at once
 
-                        Document doc;
-                        doc.doc_id   = current_id++;
-                        doc.filename = entry.path().filename().string();
-                        doc.content  = buffer.str();
-
+                        Document doc(currentID++, entry.path().fileName().string(), buffer.str());
                         documents.push_back(doc);
                     }
                 }

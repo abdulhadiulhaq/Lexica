@@ -4,7 +4,7 @@
 #include "../include/dataStructures/my_vector.hpp"
 #include "../include/dataStructures/my_hashMap.hpp"
 
-typedef long long size_t;
+#include <csdt
 
 struct Posting 
 {

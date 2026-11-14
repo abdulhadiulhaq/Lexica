@@ -3,7 +3,7 @@
 #include <string>
 #include <algorithm>
 
-typedef long long size_t;
+#include <csdt
 
 class EditDistance 
 {
