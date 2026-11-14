@@ -1,54 +1,59 @@
 #pragma once
 
-#include <string>
-#include <algorithm>
 
-#include <csdt
+#include <string>                  // for string
+using std::string;
 
+
+// a utility class for computing edit distance (Levenshtein distance) between query and vocabulary terms
 class EditDistance 
 {
     public:
-        static inline int levenshtein(const std::string& a, const std::string& b) 
+        EditDistance() 
+            {}
+
+        // calculates the minimum number of single-character edits to transform string a into string b
+        inline static int levenshtein(const string& a, const string& b) 
         {
-            size_t len_a = a.size();
-            size_t len_b = b.size();
+            auto lenA {a.size()};
+            auto lenB {b.size()};
 
-            if (len_a == 0) return static_cast<int>(len_b);
-            if (len_b == 0) return static_cast<int>(len_a);
+            if (!lenA) return lenB;
+            if (!lenB) return lenA;
 
-            int* prev = new int[len_b + 1];
-            int* curr = new int[len_b + 1];
+            auto prev {new int[lenB + 1]};
+            auto curr {new int[lenB + 1]};
 
-            for (size_t j = 0; j <= len_b; ++j) 
-            {
+            for (auto j {0}; j <= lenB; ++j) 
                 prev[j] = static_cast<int>(j);
-            }
 
-            for (size_t i = 1; i <= len_a; ++i) 
+            for (auto i {1}; i <= lenA; ++i) 
             {
                 curr[0] = static_cast<int>(i);
-                for (size_t j = 1; j <= len_b; ++j) 
+
+                for (auto j {1}; j <= lenB; ++j) 
                 {
-                    int cost = (a[i - 1] == b[j - 1]) ? 0 : 1;
-                    int deletion = prev[j] + 1;
-                    int insertion = curr[j - 1] + 1;
-                    int substitution = prev[j - 1] + cost;
+                    auto cost         { (a[i - 1] == b[j - 1]) ? 0 : 1 };
+                    auto deletion     { prev[j] + 1 };
+                    auto insertion    { curr[j - 1] + 1 };
+                    auto substitution { prev[j - 1] + cost };
 
-                    int min_val = deletion;
-                    if (insertion < min_val) min_val = insertion;
-                    if (substitution < min_val) min_val = substitution;
+                    auto minVal { deletion };
+                    if (insertion    < minVal) minVal = insertion;
+                    if (substitution < minVal) minVal = substitution;
 
-                    curr[j] = min_val;
+                    curr[j] = minVal;
                 }
-                for (size_t j = 0; j <= len_b; ++j) 
-                {
+
+                for (auto j {0}; j <= lenB; ++j) 
                     prev[j] = curr[j];
-                }
             }
 
-            int result = curr[len_b];
+            auto result {curr[lenB]};
+
             delete[] prev;
             delete[] curr;
+
             return result;
         }
 };
