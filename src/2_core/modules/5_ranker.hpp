@@ -24,9 +24,8 @@ struct SearchResult
         , score(s) 
         {}
 
-    inline bool operator<(const SearchResult& other) const 
-    {
-        return score < other.score;
+    inline bool operator<(const SearchResult& other) const {
+        return (score < other.score);
     }
 };
 

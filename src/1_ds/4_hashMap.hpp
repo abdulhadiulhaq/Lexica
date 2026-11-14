@@ -92,7 +92,7 @@ class MyHashMap
         // inserts a key-value pair into the hashMap
         inline void insert(const K& key, const V& value) 
         {
-            if (((size / static_cast<double>(capacity)) * 100) > 70)                         // rehashing if the array is > 70pc full
+            if (((size / static_cast<double>(capacity)) * 100) > 70)                // rehashing if the array is > 70pc full
                 rehash();
 
             auto idx  {hashFunction(key) % capacity};                               // computing the bucket index for the key

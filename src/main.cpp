@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "my_vector.hpp"
+#include "../../1_ds/1_vector.hpp"
 #include "my_hashmap.hpp"
 #include "trie.hpp"
 #include "min_heap.hpp"
