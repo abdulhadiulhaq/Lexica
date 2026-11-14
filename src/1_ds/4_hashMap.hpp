@@ -141,7 +141,7 @@ class MyHashMap
 
             return get(key, dummy);
         }
-dummy
+
         // empties the hashMap
         inline void clear() {
             for (auto i {0}; i < capacity; ++i) 
