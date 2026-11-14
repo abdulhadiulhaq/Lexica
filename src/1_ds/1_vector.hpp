@@ -4,6 +4,7 @@
 #include <cstddef>                                             // for size_t
 
 
+// a generic vector/dynamic-array class
 template <typename T>
 class MyVector 
 {
@@ -44,15 +45,20 @@ class MyVector
 
             data[size++] = val;
         }
+        
+        // removes data from the back
+        inline void pop_back() {
+            if (size) --size;
+        }
 
-        // provides random access using []
+        // provides random access and modification using []
         inline T& operator[](const size_t index) const {
             return data[index];
         }
 
-        // provides random access using []
+        // provides read-only random access using [] for const objects
         inline const T& operator[](const size_t index) const {
-            return data[index];
+            return data[index]; 
         }
 
         // returns the size of the vector
