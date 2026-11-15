@@ -1,151 +1,118 @@
 # Lexica
 
-A command-line search engine and data structures lab, written in C++ from scratch.
+A high-performance, header-only C++17 search engine and data structures lab built completely from scratch with manual memory management and custom-crafted data structures.
 
-Lexica indexes a folder of text files and lets you autocomplete words, run ranked searches, and get spelling suggestions. Every feature is powered by a data structure built by hand, and each one is benchmarked against an alternative.
+Lexica indexes a folder of text files, builds an inverted index, and provides both an interactive terminal CLI and a Web GUI server to autocomplete words, run TF-IDF ranked searches, and perform fuzzy spell-checking.
 
-> **Status:** in development. See [TODO.md](TODO.md) for module progress. Sample outputs below are illustrative until benchmarks are finalised.
+> **Status:** Stable core memory management implemented. Supports CLI REPL and Web GUI interfaces.
 
-## Features
+## Features & Commands
 
-| Feature | Command | Powered by |
+| Feature | Command / Flag | Description |
 |---|---|---|
-| Index a folder | `index <folder>` | Tokenizer, hash map, trie, BK-tree |
-| Autocomplete | `suggest <prefix>` | Trie or radix trie, min-heap for top 5 |
-| Ranked search | `search <terms> [-k N] [--any]` | Inverted index, postings intersection, TF-IDF, min-heap top-k |
-| Spelling suggestions | `fuzzy <word>` | Edit distance (DP) and BK-tree |
-| Query caching | `set cache <N>` | LRU cache (hash map + doubly linked list) |
-| Swap internals live | `set map chain\|open`, `set trie std\|radix` | Two hash maps, two tries behind one interface |
-| Statistics | `stats` | Counters kept by every structure |
-| Benchmarks | `bench <name>` | Fixed-seed timing harness |
+| Index corpus | `index <folder>` | Scans directory, tokenizes documents, builds inverted index & trie |
+| Autocomplete | `suggest <prefix>` | Returns prefix-matching suggestions with frequencies from the Trie |
+| Ranked search | `search <query> [-k <num>]` | Evaluates queries via TF-IDF ranking with LRU query caching |
+| Spell check / Fuzzy | `fuzzy <word>` | Finds closest vocabulary match using Levenshtein edit distance |
+| Corpus statistics | `stats` | Displays total document count and unique term count |
+| Help menu | `help` | Lists all available CLI commands |
+| Exit CLI | `quit` or `exit` | Closes the Lexica terminal session |
+| Web GUI Server | `--gui <port>` | Launches the HTTP server interface (e.g., `./build/lexica --gui 8080`) |
 
-## Example session
+## Example Session
 
 ```
-lexica> index data/books
-Reading files ........ 1,204 files
-Tokenizing ........... 8,412,330 tokens
-Unique terms ......... 71,904
-Indexed in 2.41 s
+Lexica> index data/sample
+[INFO] Reading files from: data/sample...
+Indexing completed successfully!
+--------------------------------------------------
+  Files Indexed : 3
+  Total Tokens  : 1,420
+  Unique Terms  : 312
+  Time Elapsed  : 0.01042 s
+--------------------------------------------------
 
-lexica> suggest neu
-  neural    (412)
-  neuron    (210)
-  neutral   (198)
-  neutron   (133)
-  neurology (87)
+Lexica> suggest neu
+[INFO] Autocomplete Suggestions for prefix: "neu"
+--------------------------------------------------
+  1. neural    (freq: 4)
+  2. network   (freq: 3)
+--------------------------------------------------
 
-lexica> search neural network -k 3
-Cache: MISS
-  1. deep_learning.txt     0.0814
-  2. ai_history.txt        0.0577
-  3. brain_notes.txt       0.0426
+Lexica> search neural network -k 3
+[INFO] Search Results for: "neural network"
+--------------------------------------------------
+  Cache Status : MISS
+--------------------------------------------------
+  1. ai_notes.txt  [0.1425]
+  2. deep_learning.txt  [0.0891]
+--------------------------------------------------
 
-lexica> fuzzy nueral
-Did you mean: neural (distance 2)
-[BK-tree visited 214 of 71,904 words]
+Lexica> fuzzy nueral
+[INFO] Spell Check / Fuzzy Search for: "nueral"
+--------------------------------------------------
+  Did you mean: neural (distance 2)
+--------------------------------------------------
 ```
 
-## Data structures
+## Custom Data Structures (`src/1_ds/`)
 
-All built from scratch. `std::string` and `std::vector` are used only as plain storage.
+All core structures are built from scratch with manual memory management (Rule-of-Five copy/move semantics). STL containers (`std::vector`, `std::unordered_map`) are avoided in the core engine components.
 
-| Structure | Used for | Compared against |
-|---|---|---|
-| Hash map (chaining) | Inverted index | Open addressing, sorted array |
-| Hash map (open addressing) | Inverted index | Chaining |
-| Trie | Autocomplete | Radix trie |
-| Radix trie | Autocomplete with fewer nodes | Standard trie |
-| Min-heap | Top-k ranking and suggestions | Full sort |
-| BK-tree | Fuzzy lookup | Brute-force scan |
-| LRU cache | Repeated queries | No cache |
-| Sorted postings intersection | AND queries | Plain merge vs skip pointers (stretch) |
+| Structure | Purpose in Lexica |
+|---|---|
+| `MyVector` | Custom dynamic array with contiguous heap allocation and safe iterators |
+| `MyHashMap` | Custom hash map used for vocabulary and posting lists |
+| `Trie` | Prefix tree used for fast autocomplete suggestions |
+| `MinHeap` | Priority queue structure used for ranking and top-k retrieval |
+| `LRUCache` | Fast query cache to store and retrieve recent search results |
 
-## How search works
+## Architecture & Modules (`src/2_core/`)
 
-1. Query terms are normalised with the same tokenizer used at index time.
-2. The LRU cache is checked first. A hit returns immediately.
-3. On a miss, each term's postings list is fetched from the hash map.
-4. Lists are intersected (AND) or merged (OR).
-5. Each candidate document is scored with TF-IDF: the sum of `tf x idf` over query terms, where `tf = count / document length` and `idf = ln(N / df)`.
-6. A min-heap of size k keeps the best results.
-7. The result is stored in the cache and printed.
+* **FileLoader (`1_fileLoader.hpp`)**: Scans directories recursively for `.txt` files and loads documents into memory.
+* **Tokenizer (`2_tokenizer.hpp`)**: Normalizes text to lowercase, strips non-alphabetic characters, and extracts clean tokens.
+* **DocumentStore (`3_documentStore.hpp`)**: Manages document metadata and raw text lookups by docID.
+* **InvertedIndex (`4_invertedIndex.hpp`)**: Maps terms to document postings lists.
+* **Ranker / TF-IDF (`5_ranker.hpp`)**: Computes term frequency and inverse document frequency scores.
+* **EditDistance (`6_editDistance.hpp`)**: Implements Levenshtein distance algorithms for fuzzy matching.
+* **Engine (`engine.hpp`)**: Central orchestration class binding the index, cache, and search subsystems together.
 
-## Build
+## Build Instructions
 
-Requires a C++17 compiler and CMake.
+Requires a C++17 compatible compiler and CMake.
 
 ```bash
+# Configure and build the project
 cmake -S . -B build
-cmake --build build
+cmake --build build --config Release
 ```
 
-Run it:
+## Running the Application
 
-```bash
-./build/lexica
-```
+* **Run the Interactive CLI REPL:**
+  ```bash
+  ./build/lexica
+  ```
 
-Run the tests:
+* **Run the Web GUI Server:**
+  ```bash
+  ./build/lexica --gui 8080
+  ```
+  Then open your browser at `http://localhost:8080`.
 
-```bash
-./build/test_hashmap
-./build/test_trie
-./build/test_heap
-```
-
-Run a benchmark (built with `-O2`):
-
-```bash
-./build/bench_topk
-```
-
-## Project structure
+## Project Structure
 
 ```
 src/
-  ds/       hashmap_chain.h  hashmap_open.h  trie.h  radix_trie.h
-            min_heap.h  bk_tree.h  lru_cache.h
-  core/     tokenizer  file_loader  index  ranker  edit_distance  engine
-  cli/      commands  main
-tests/      one test executable per structure
-bench/      one benchmark executable per comparison
-data/sample/  small corpus for tests and demos
-docs/       report and benchmark tables
+  1_ds/            Custom data structures (vector, hashmap, trie, heap, lru)
+  2_core/          Engine core modules (file loader, tokenizer, index, ranker, etc.)
+  3_frontEnd/
+    1_cli/         Command-line interface (cli.hpp)
+    2_webGUI/      Web GUI server (gui.hpp using cpp-httplib)
+  main.cpp         CLI / GUI entry point & flag parsing
+data/sample/       Sample plain-text corpus for local testing
 ```
 
 ## Corpus
 
-A small sample corpus is included in `data/sample/`. For benchmarks, use a larger collection of plain-text files such as books from Project Gutenberg. The large corpus is not committed to this repository.
-
-## Benchmarks
-
-Fixed random seeds, `-O2`, warm-up run discarded, average of three runs. Full tables are in `docs/`.
-
-| Experiment | Compares | Metric |
-|---|---|---|
-| Hash map | Chaining vs open addressing vs sorted array | Lookup time, collisions, load factor |
-| Trie | Standard vs radix | Node count, lookup time |
-| Top-k | Heap vs full sort | Time, crossover point |
-| Fuzzy | BK-tree vs brute force | Words compared, time |
-| Cache | On vs off | Hit rate, speedup |
-
-## Limitations
-
-- No phrase search (would need positional postings).
-- No live file watching. Re-run `index` after files change.
-- Command line only, no GUI.
-- Plain TF-IDF ranking, no BM25 and no stemming.
-- Plain-text files only.
-- The open-addressing hash map has no delete, because the index is built once and never edited.
-- In-memory only. The index is rebuilt on each run.
-
-## Testing
-
-Each structure has tests that check key invariants:
-
-- Both hash maps return identical results.
-- Both tries return identical autocomplete.
-- Heap top-k equals full-sort top-k.
-- BK-tree results equal brute force.
-- A cache hit returns exactly what the miss returned.
+Place your plain-text (`.txt`) files inside the `data/sample/` directory, or pass any custom directory path directly to the `index` command in the CLI.
