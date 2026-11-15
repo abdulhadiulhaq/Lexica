@@ -28,7 +28,7 @@ class CLI
                     << "    fuzzy <word>                        - Find spelling corrections using Levenshtein distance\n"
                     << "    stats                               - Display current corpus and indexing statistics\n"
                     << "    help                                - Show this help menu\n"
-                    << "    quit (or exit)                      - Exit Lexica CLI\n\n";
+                    << "    quit (or exit)                      - Exit Lexica CLI\n";
         }
 
         // helper to parse and execute the search command (supporting optional -k flag)
@@ -123,6 +123,19 @@ class CLI
                 cout << "No close matches found for: " << term << "\n";                             // ie distance > maxTolerance
         }
 
+        void printIndexStats(const int fileCount, const size_t totalTokens, const size_t uniqueTerms, const double elapsedSeconds) {
+            cout    << rang::fg::green << "\n[INFO] " << rang::style::reset 
+                    
+                    << "Indexing completed successfully!\n"
+                    << "--------------------------------------------------\n"
+                    << "  " << rang::fgB::cyan << "Files Indexed" << rang::style::reset << " : " << fileCount   << "\n"
+                    << "  " << rang::fgB::cyan << "Total Tokens " << rang::style::reset << " : " << totalTokens << "\n"
+                    << "  " << rang::fgB::cyan << "Unique Terms " << rang::style::reset << " : " << uniqueTerms << "\n"
+                    << "  " << rang::fgB::cyan << "Time Elapsed " << rang::style::reset << " : "
+                    << std::fixed << std::setprecision(5) << elapsedSeconds << " s\n"
+                    << "--------------------------------------------------\n";
+        }
+
         bool dispatchCommmand(const string& cmd, const string& args){
             // index
             if (cmd == "index") 
@@ -138,12 +151,8 @@ class CLI
                     if (!stats.fileCount) 
                         cout << "[!] Error: No documents found or failed to load directory.\n";
 
-                    else {
-                        cout << "Indexed "       << stats.fileCount      << " files\n";
-                        cout << "Total tokens: " << stats.totalTokens    << "\n";
-                        cout << "Unique terms: " << stats.uniqueTerms    << "\n";
-                        cout << "Indexed in "    << stats.elapsedSeconds << " s\n";
-                    }
+                    else
+                        printIndexStats(stats.fileCount, stats.totalTokens, stats.uniqueTerms, stats.elapsedSeconds);
                 }
             } 
     
@@ -189,6 +198,7 @@ class CLI
 
         void printProgramName(const int pauseDuration = 100){
             cout << rang::fgB::green;
+            cout << rang::style::bold;
 
             for (const auto& ch : (programName + "> ")){
                 cout << ch << std::flush;
@@ -221,7 +231,11 @@ class CLI
                 printProgramName(100);
 
                 if (!std::getline(cin, line)) break;
-                if (line.empty())             continue;
+
+                if (line.empty()) {
+                    cout << '\n';
+                    continue;
+                }
 
                 // parse command and arguments
                     string cmd      {""};
@@ -244,7 +258,7 @@ class CLI
                 // dispatch command
                 if (!dispatchCommmand(cmd, args)) break;
 
-                cout << '\n';
+                cout << "\n\n";
             }
         }
 };
