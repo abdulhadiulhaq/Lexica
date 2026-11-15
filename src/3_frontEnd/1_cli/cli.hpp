@@ -3,8 +3,9 @@
 
 #include <string>                                           // for string
 #include <iostream>                                         // for cout
+#include <algorithm>                                        // for min
 #include "../../2_core/engine.cpp"                          // for engine
-using std::cin, std::cout, std::string;
+using std::cin, std::min, std::cout, std::string;
 
 
 // a command-line interface (CLI) frontend class for Lexica
