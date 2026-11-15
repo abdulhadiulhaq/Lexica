@@ -41,7 +41,7 @@ class LRUCache
 
         HashNode** buckets;
         size_t     capacity;
-        size_t     size;
+        size_t     cacheSize;
         Node*      head;                                // most-recently-used (MRU) item
         Node*      tail;                                // least-recently-used (LRU) item
 
@@ -115,13 +115,13 @@ class LRUCache
             else        head       = nullptr;            // head = tail = nullptr
 
             delete oldTail;
-            --size;
+            --cacheSize;
         }
 
     public:
         LRUCache(size_t cap = 101)                      // arbitrary default cache capacity of 101 items
             : capacity(cap)
-            , size(0)
+            , cacheSize(0)
             , head(nullptr)
             , tail(nullptr) 
             {
@@ -194,7 +194,7 @@ class LRUCache
             }
 
             // evict least-recently-used item if cache is at max capacity
-            if (size >= capacity) 
+            if (cacheSize >= capacity) 
                 removeTail();
 
             // create & prepend new node to the front (MRU) of the doubly-linked list
@@ -211,16 +211,16 @@ class LRUCache
                 newbucket->next = buckets[idx];
                 buckets[idx]    = newbucket;
             
-            ++size;
+            ++cacheSize;
         }
 
         // returns the current number of cached items
         inline size_t size() const {
-            return size;
+            return cacheSize;
         }
 
         // returns true if the cache is empty
         inline bool empty() const {
-            return (size == 0);
+            return (cacheSize == 0);
         }
 };

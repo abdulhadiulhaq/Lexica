@@ -26,7 +26,7 @@ class MyHashMap
     private:
         HashNode** buckets;
         size_t     capacity;
-        size_t     size;
+        size_t     mapSize;
 
         // returns the hash of the input string
         unsigned long hashFunction(const string& str) const {
@@ -75,7 +75,7 @@ class MyHashMap
     public:
         MyHashMap(size_t cap = 101)                                                 // arbitrary default capacity
             : capacity(cap)
-            , size(0) 
+            , mapSize(0) 
             {
                 buckets = new HashNode*[capacity]();                                // makes & zero-initializes the array
 
@@ -92,7 +92,7 @@ class MyHashMap
         // inserts a key-value pair into the hashMap
         inline void insert(const K& key, const V& value) 
         {
-            if (((size / static_cast<double>(capacity)) * 100) > 70)                // rehashing if the array is > 70pc full
+            if (((mapSize / static_cast<double>(capacity)) * 100) > 70)                // rehashing if the array is > 70pc full
                 rehash();
 
             auto idx  {hashFunction(key) % capacity};                               // computing the bucket index for the key
@@ -114,7 +114,7 @@ class MyHashMap
                 newNode->next = buckets[idx];
                 buckets[idx] = newNode;
                 
-                ++size;
+                ++mapSize;
         }
 
         // used to get the value of a key in the map
@@ -158,11 +158,11 @@ class MyHashMap
                 buckets[i] = nullptr;
             }
             
-            size = 0;
+            mapSize = 0;
         }
 
         // returns the size of the map
         inline size_t size() const {
-            return size;
+            return mapSize;
         }
 };
