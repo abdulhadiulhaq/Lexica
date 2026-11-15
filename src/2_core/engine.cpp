@@ -13,6 +13,7 @@
 #include "../1_ds/3_trie.hpp"                           // for Trie (Autocomplete)
 #include "../1_ds/5_lruCache.hpp"                       // for LRUCache (Query Caching)
 using std::string;
+namespace chr = std::chrono;
 
 
 // struct representing indexing statistics
@@ -30,7 +31,7 @@ struct IndexStats
         , elapsedSeconds(0.0) 
         {}
 
-    IndexStats(size_t files, size_t tokens, size_t unique, double seconds) 
+    IndexStats(const size_t files, const size_t tokens, const size_t unique, const double seconds) 
         : fileCount(files)
         , totalTokens(tokens)
         , uniqueTerms(unique)
@@ -52,7 +53,7 @@ struct SearchResponse
         , score(0.0) 
         {}
 
-    SearchResponse(int id, const string& name, double s) 
+    SearchResponse(const int id, const string& name, const double s) 
         : docID(id)
         , fileName(name)
         , score(s) 
@@ -64,38 +65,36 @@ struct SearchResponse
 class Engine 
 {
     private:
-        DocumentStore               documentStore;
-        InvertedIndex               invertedIndex;
-        Trie                        autocompleteTrie;
-        mutable LRUCache<string, MyVector<SearchResponse>> queryCache; // LRU cache for query results
-        size_t                      uniqueTermCount;
-        size_t                      totalTokenCount;
-        bool                        isInitialized;
+        DocumentStore                              documentStore;
+        InvertedIndex                              invertedIndex;
+        Trie                                       autocompleteTrie;
+        LRUCache<string, MyVector<SearchResponse>> queryCache;                           // LRU cache for query results
+        size_t                                     uniqueTermCount;
+        size_t                                     totalTokenCount;
+        bool                                       isInitialized;
 
     public:
-        Engine(size_t cacheCapacity = 100) 
+        Engine(size_t cacheCapacity = 101) 
             : queryCache(cacheCapacity)
             , uniqueTermCount(0)
             , totalTokenCount(0)
             , isInitialized(false) 
             {}
 
-        // 1. INDEXING: scans directory, tokenizes documents, builds inverted index & trie, and computes stats
+
+        // index: scans directory, tokenizes documents, builds inverted index & trie, and computes stats
         inline IndexStats initialize(const string& dirPath) 
         {
-            auto startTime {std::chrono::high_resolution_clock::now()};
+            auto startTime {chr::high_resolution_clock::now()};                     // highResolution: greatest poss accuracy
 
             auto docs {FileLoader::loadDirectory(dirPath)};
-            if (docs.empty()) 
-            {
+            if (docs.empty())                                                               // no files in the directory to index
                 return IndexStats();
-            }
 
-            size_t fileCount {0};
+            size_t fileCount   {0};
             size_t totalTokens {0};
 
-            // Custom hash set to track unique vocabulary across the entire corpus
-            MyHashMap<string, bool> vocabulary;
+            MyHashMap<string, bool> vocabulary;                                             // custom hash set to track unique vocabulary across the entire corpus
 
             for (const auto& doc : docs) 
             {
@@ -106,35 +105,36 @@ class Engine
                 for (const auto& token : tokens) 
                 {
                     ++totalTokens;
+
                     auto dummy {false};
-                    if (!vocabulary.get(token, dummy)) 
+                    if (!vocabulary.get(token, dummy))                                      // insert the token if it not alr inserted
                     {
                         vocabulary.insert(token, true);
-                        autocompleteTrie.insert(token, 1); // populate trie for autocomplete
+                        autocompleteTrie.insert(token, 1);                                  // populate trie for autocomplete
                     }
                 }
 
                 invertedIndex.addDocument(doc.docID, tokens);
             }
 
-            auto endTime {std::chrono::high_resolution_clock::now()};
-            std::chrono::duration<double> elapsed {endTime - startTime};
+            // calculating the duration of the indexing
+                auto endTime {chr::high_resolution_clock::now()};
+                chr::duration<double> elapsed {endTime - startTime};                    
 
-            uniqueTermCount = vocabulary.get_size();
+            uniqueTermCount = vocabulary.size();
             totalTokenCount = totalTokens;
-            isInitialized = true;
+            isInitialized   = true;
 
             return IndexStats(fileCount, totalTokenCount, uniqueTermCount, elapsed.count());
         }
 
-        // 2. AUTOCOMPLETE: returns prefix-matching suggestions with frequencies from the Trie
+
+        // autocomplete: returns prefix-matching suggestions with frequencies from the Trie
         inline MyVector<std::pair<string, int>> suggest(const string& prefix, size_t topK = 5) const 
         {
             MyVector<std::pair<string, int>> results;
             if (!isInitialized || prefix.empty()) 
-            {
                 return results;
-            }
 
             auto rawSuggestions {autocompleteTrie.suggest(prefix)};
 
@@ -142,54 +142,53 @@ class Engine
             for (auto i {1}; i < rawSuggestions.size(); ++i) 
             {
                 auto key {rawSuggestions[i]};
-                long long j = static_cast<long long>(i) - 1;
+                auto j   {i - 1};
 
-                while (j >= 0 && rawSuggestions[j].second < key.second) 
+                while ((j >= 0) && (rawSuggestions[j].second < key.second)) 
                 {
                     rawSuggestions[j + 1] = rawSuggestions[j];
                     --j;
                 }
+
                 rawSuggestions[j + 1] = key;
             }
 
             // Truncate to topK
-            auto limit {(rawSuggestions.size() < topK) ? rawSuggestions.size() : topK};
-            for (auto i {0}; i < limit; ++i) 
-            {
-                results.push_back(rawSuggestions[i]);
-            }
+                auto limit = min(rawSuggestions.size(), topK);
+                for (auto i {0}; i < limit; ++i) 
+                    results.push_back(rawSuggestions[i]);
 
             return results;
         }
 
-        // 3. RANKED SEARCH WITH LRU CACHING: evaluates queries via TF-IDF and checks cache hit/miss status
-        inline MyVector<SearchResponse> search(const string& queryString, size_t topK, bool& cacheHitOut) const 
+
+        // searching with lru cache: evaluates queries via TF-IDF and checks cache hit/miss status
+        inline MyVector<SearchResponse> search(const string& queryString, size_t topK, bool& cacheHitOut) 
         {
             MyVector<SearchResponse> responses;
+
             if (!isInitialized || queryString.empty()) 
             {
                 cacheHitOut = false;
                 return responses;
             }
 
-            // Construct cache key combining query string and topK limit
-            string cacheKey {queryString + "_k" + std::to_string(topK)};
+            string cacheKey {queryString + "_k" + std::to_string(topK)};                                // constructing the cache key by combining query string and topK limit
 
-            // Check LRU Cache first
-            if (queryCache.get(cacheKey, responses)) 
-            {
-                cacheHitOut = true;
-                return responses;
-            }
+            // checking the LRU Cache first
+                if (queryCache.get(cacheKey, responses)) 
+                {
+                    cacheHitOut = true;
+                    return responses;
+                }
 
-            cacheHitOut = false;
+                cacheHitOut = false;
+
             auto queryTokens {Tokenizer::tokenize(queryString)};
             if (queryTokens.empty()) 
-            {
                 return responses;
-            }
 
-            // Rank via TF-IDF Ranker
+            // ranking via the TF-IDF Ranker
             auto rawResults {Ranker::rankQuery(queryTokens, invertedIndex, documentStore.size(), topK)};
 
             // Resolve docIDs into filenames and scores
@@ -197,9 +196,7 @@ class Engine
             {
                 Document doc(0, "", "");
                 if (documentStore.getDocument(res.docID, doc)) 
-                {
                     responses.push_back(SearchResponse(res.docID, doc.fileName, res.score));
-                }
             }
 
             // Store result in LRU Cache for future queries
@@ -208,60 +205,58 @@ class Engine
             return responses;
         }
 
-        // 4. FUZZY SEARCH / SPELL CORRECTION: finds the closest vocabulary term using Levenshtein distance
-        inline bool fuzzyMatch(const string& queryTerm, string& bestMatchOut, int& minDistanceOut, int maxTolerance = 2) const 
+
+        // fuzzy search: finds the closest vocabulary term using Levenshtein distance
+        inline bool fuzzyMatch(const string& queryTerm, string& bestMatchOut, int& minDistanceOut, const int maxTolerance = 3) const 
         {
             if (!isInitialized || queryTerm.empty()) 
-            {
                 return false;
-            }
 
-            // If exact term exists, distance is 0
+            // if exact term exists, distance is 0
             MyVector<Posting> dummyPostings;
             if (invertedIndex.getPostings(queryTerm, dummyPostings)) 
             {
-                bestMatchOut = queryTerm;
+                bestMatchOut   = queryTerm;
                 minDistanceOut = 0;
+
                 return true;
             }
 
             // Otherwise, search across indexed vocabulary using EditDistance
-            // (Note: In a full implementation, this iterates over unique vocabulary or utilizes a BK-tree)
-            auto suggestions {autocompleteTrie.suggest("")}; // gets all words from trie
-            int bestDistance {9999};
-            string bestWord {""};
+            auto   suggestions  {autocompleteTrie.suggest("")};                                   // gets all words from trie
+            auto   bestDistance {9999};
+            string bestWord     {""};
 
             for (const auto& pair : suggestions) 
             {
                 const string& vocabWord {pair.first};
-                int dist {EditDistance::levenshtein(queryTerm, vocabWord)};
+                int           dist      {EditDistance::levenshtein(queryTerm, vocabWord)};
 
                 if (dist < bestDistance) 
                 {
                     bestDistance = dist;
-                    bestWord = vocabWord;
+                    bestWord     = vocabWord;
                 }
             }
 
             if (bestDistance <= maxTolerance) 
             {
-                bestMatchOut = bestWord;
+                bestMatchOut   = bestWord;
                 minDistanceOut = bestDistance;
+
                 return true;
             }
 
             return false;
         }
 
-        // Returns total indexed documents
-        inline size_t getDocumentCount() const 
-        {
+        // returns total indexed documents
+        inline size_t getDocumentCount() const {
             return documentStore.size();
         }
 
-        // Returns total unique terms
-        inline size_t getUniqueTermCount() const 
-        {
+        // returns total unique terms
+        inline size_t getUniqueTermCount() const {
             return uniqueTermCount;
         }
 };
