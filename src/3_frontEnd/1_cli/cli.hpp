@@ -23,15 +23,15 @@ class CLI
         void printHelp() const 
         {
             cout    << rang::fg::green << "\n[INFO] " << rang::style::reset << "Lexica Help & Available Commands:\n"
-                    << "--------------------------------------------------------------------------------\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "index <path>"                << rang::style::reset << "          - Load and index a directory of .txt files\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "suggest <prefix>"            << rang::style::reset << "        - Get autocomplete suggestions for a prefix\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "search <query> [-k <num>]"   << rang::style::reset << "       - Search the corpus using TF-IDF ranking\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "fuzzy <word>"                << rang::style::reset << "          - Find spelling corrections using Levenshtein distance\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "stats"                       << rang::style::reset << "            - Display current corpus and indexing statistics\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "help"                        << rang::style::reset << "             - Show this help menu\n"
-                    <<   "  "     <<  rang::fgB::cyan     <<   "quit (or exit)"              << rang::style::reset << "         - Exit Lexica CLI\n"
-                    << "--------------------------------------------------------------------------------\n";
+                    << "----------------------------------------------------------------------------------------------\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "index   <path>             "   <<   rang::style::reset   <<   "        - Load and index a directory of .txt files\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "suggest <prefix>           "   <<   rang::style::reset   <<   "        - Get autocomplete suggestions for a prefix\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "search  <query>  [-k <num>]"   <<   rang::style::reset   <<   "        - Search the corpus using TF-IDF ranking\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "fuzzy   <word>             "   <<   rang::style::reset   <<   "        - Find spelling corrections using Levenshtein distance\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "stats                      "   <<   rang::style::reset   <<   "        - Display current corpus and indexing statistics\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "help                       "   <<   rang::style::reset   <<   "        - Show this help menu\n"
+                    <<   "  "   <<   rang::fgB::cyan    <<   "quit (or exit)             "   <<   rang::style::reset   <<   "        - Exit Lexica CLI\n"
+                    << "----------------------------------------------------------------------------------------------\n";
         }
 
         // helper to parse and execute the search command (supporting optional -k flag)
@@ -111,8 +111,9 @@ class CLI
                 for (auto i {0}; i < suggestions.size(); ++i) {
                     const auto& pair {suggestions[i]};
 
-                    cout    << "  " << rang::fgB::cyan << (i + 1) << "." << rang::style::reset << " " << pair.first 
-                            << "  " << rang::fg::green << "(freq: " << pair.second << ")" << rang::style::reset << "\n";
+                    cout    << "  " << rang::fgB::cyan << std::right << std::setw(2) << (i + 1) << "." << rang::style::reset << " " 
+                            << std::left << std::setw(25)   << pair.first 
+                            << rang::fg::green << "(freq: " << pair.second << ")" << rang::style::reset << "\n";
                 }
             }
 
@@ -168,7 +169,7 @@ class CLI
                 }
                 
                 else {
-                    cout << rang::fg::green << "[INFO] " << rang::style::reset << "Reading files from: " << rang::style::bold << args << rang::style::reset << "...\n";
+                    cout << rang::fg::green << "\n[INFO] " << rang::style::reset << "Reading files from: " << rang::style::bold << args << rang::style::reset << "...\n";
                     auto stats {engine.initialize(args)};
 
                     if (!stats.fileCount) 
