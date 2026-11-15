@@ -3,12 +3,12 @@
 
 #include <string>                                       // for string
 #include <chrono>                                       // for high-resolution timing
-#include "1_fileLoader.hpp"                             // for FileLoader and Document
-#include "2_tokenizer.hpp"                              // for Tokenizer
-#include "3_documentStore.hpp"                          // for DocumentStore
-#include "4_invertedIndex.hpp"                          // for InvertedIndex
-#include "5_ranker.hpp"                                 // for Ranker and SearchResult
-#include "6_editDistance.hpp"                           // for EditDistance
+#include "modules/1_fileLoader.hpp"                     // for FileLoader and Document
+#include "modules/2_tokenizer.hpp"                      // for Tokenizer
+#include "modules/3_documentStore.hpp"                  // for DocumentStore
+#include "modules/4_invertedIndex.hpp"                  // for InvertedIndex
+#include "modules/5_ranker.hpp"                         // for Ranker and SearchResult
+#include "modules/6_editDistance.hpp"                   // for EditDistance
 #include "../1_ds/1_vector.hpp"                         // for MyVector
 #include "../1_ds/3_trie.hpp"                           // for Trie (Autocomplete)
 #include "../1_ds/5_lruCache.hpp"                       // for LRUCache (Query Caching)
