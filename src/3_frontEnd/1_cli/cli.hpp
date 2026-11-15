@@ -119,26 +119,27 @@ class CLI
                 cout << "No close matches found for: " << term << "\n";                             // ie distance > maxTolerance
         }
 
-        void dispatchCommmand(const string& cmd, const string& args){
+        bool dispatchCommmand(const string& cmd, const string& args){
             // index
             if (cmd == "index") 
             {
                 if (args.empty()) {
                     cout << "[!] Error: Missing directory path. Usage: index <path>\n";
-                    return;
                 }
-
-                cout << "Reading files from: " << args << "...\n";
-                auto stats {engine.initialize(args)};
-
-                if (!stats.fileCount) 
-                    cout << "[!] Error: No documents found or failed to load directory.\n";
-
+                
                 else {
-                    cout << "Indexed "       << stats.fileCount      << " files\n";
-                    cout << "Total tokens: " << stats.totalTokens    << "\n";
-                    cout << "Unique terms: " << stats.uniqueTerms    << "\n";
-                    cout << "Indexed in "    << stats.elapsedSeconds << " s\n";
+                    cout << "Reading files from: " << args << "...\n";
+                    auto stats {engine.initialize(args)};
+
+                    if (!stats.fileCount) 
+                        cout << "[!] Error: No documents found or failed to load directory.\n";
+
+                    else {
+                        cout << "Indexed "       << stats.fileCount      << " files\n";
+                        cout << "Total tokens: " << stats.totalTokens    << "\n";
+                        cout << "Unique terms: " << stats.uniqueTerms    << "\n";
+                        cout << "Indexed in "    << stats.elapsedSeconds << " s\n";
+                    }
                 }
             } 
     
@@ -166,7 +167,7 @@ class CLI
             // exit
             else if (cmd == "quit" || cmd == "exit") {
                 cout << "Shutting down Lexica. Goodbye!\n";
-                return;
+                return false;
             } 
 
             // help
@@ -178,6 +179,8 @@ class CLI
             else {
                 cout << "[!] Unknown command: '" << cmd << "'. Type 'help' for instructions.\n";
             }
+
+            return true;
         }
 
     public:
@@ -219,7 +222,7 @@ class CLI
                     }
 
                 // dispatch command
-                dispatchCommmand(cmd, args);
+                if (!dispatchCommmand(cmd, args)) break;
             }
         }
 };
