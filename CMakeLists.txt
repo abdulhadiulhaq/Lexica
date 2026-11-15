@@ -9,3 +9,7 @@ include_directories(src)                                    # the header files
 add_executable(lexica                                       # the cpp files
     src/main.cpp
 )
+
+# cpphttplib requires pthread support on Linux/macOS
+    find_package(Threads REQUIRED)
+    target_link_libraries(lexica PRIVATE Threads::Threads)
