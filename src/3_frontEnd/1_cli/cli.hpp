@@ -4,6 +4,7 @@
 #include <string>                                           // for string
 #include <thread>                                           // for sleep_for
 #include <chrono>                                           // for milliseconds
+#include <iomanip>                                          // for setprecision, fixed
 #include <iostream>                                         // for cout
 #include <algorithm>                                        // for min
 #include "include/rang.hpp"                                 // for namespace rang
@@ -21,21 +22,23 @@ class CLI
         // helper to print the help menu
         void printHelp() const 
         {
-            cout    << "\nAvailable Commands:\n"
-                    << "    index <path>                        - Load and index a directory of .txt files\n"
-                    << "    suggest <prefix>                    - Get autocomplete suggestions for a prefix\n"
-                    << "    search <query> [-k <num>]           - Search the corpus using TF-IDF ranking\n"
-                    << "    fuzzy <word>                        - Find spelling corrections using Levenshtein distance\n"
-                    << "    stats                               - Display current corpus and indexing statistics\n"
-                    << "    help                                - Show this help menu\n"
-                    << "    quit (or exit)                      - Exit Lexica CLI\n";
+            cout    << rang::fg::green << "\n[INFO] " << rang::style::reset << "Lexica Help & Available Commands:\n"
+                    << "--------------------------------------------------------------------------------\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "index <path>"                << rang::style::reset << "          - Load and index a directory of .txt files\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "suggest <prefix>"            << rang::style::reset << "        - Get autocomplete suggestions for a prefix\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "search <query> [-k <num>]"   << rang::style::reset << "       - Search the corpus using TF-IDF ranking\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "fuzzy <word>"                << rang::style::reset << "          - Find spelling corrections using Levenshtein distance\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "stats"                       << rang::style::reset << "            - Display current corpus and indexing statistics\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "help"                        << rang::style::reset << "             - Show this help menu\n"
+                    <<   "  "     <<  rang::fgB::cyan     <<   "quit (or exit)"              << rang::style::reset << "         - Exit Lexica CLI\n"
+                    << "--------------------------------------------------------------------------------\n";
         }
 
         // helper to parse and execute the search command (supporting optional -k flag)
         void handleSearch(const string& args) 
         {
             if (args.empty()) {
-                cout << "[!] Error: Search query cannot be empty.\n";
+                cout << rang::fg::yellow << "\n[!] " << rang::style::reset << "Error: Search query cannot be empty.\n";
                 return;
             }
 
@@ -44,6 +47,7 @@ class CLI
 
             // check if user specified a custom -k flag (e.g., "neural network -k 3")
                 auto kPos {args.find("-k")};
+
                 if (kPos != string::npos) 
                 {
                     query = args.substr(0, kPos);
@@ -66,67 +70,86 @@ class CLI
             bool cacheHit {false};
             auto results {engine.search(query, topK, cacheHit)};
 
-            cout << "Cache: " << (cacheHit? "HIT" : "MISS") << "\n";
+            cout    << rang::fg::green << "\n[INFO] " << rang::style::reset << "Search Results for: \"" << rang::style::bold << query << rang::style::reset << "\"\n"
 
-            if (results.empty()) 
-                cout << "No matching documents found.\n";
+                    << "--------------------------------------------------\n"
+                    << "  " << rang::fgB::cyan << "Cache Status" << rang::style::reset << " : " 
+                    << (cacheHit? rang::fg::green : rang::fg::yellow) << (cacheHit? "HIT" : "MISS") << rang::style::reset << "\n"
+                    << "--------------------------------------------------\n";
 
+            if (results.empty())
+                cout << "  No matching documents found.\n";
+            
             else {
                 for (auto i {0}; i < results.size(); ++i) 
                 {
                     const auto& res {results[i]};
-                    cout << "  " << (i + 1) << ". " << res.fileName << "     [" << res.score << "]\n";
+                    cout    << "  " << rang::fgB::cyan << (i + 1) << "." << rang::style::reset << " " << res.fileName 
+                            << "  " << rang::fg::green << "[" << std::fixed << std::setprecision(4) << res.score << "]" << rang::style::reset << "\n";
                 }
             }
+
+            cout << "--------------------------------------------------\n";
         }
 
         // helper to parse and execute the suggest command
         void handleSuggest(const string& prefix) 
         {
             if (prefix.empty()) {
-                cout << "[!] Error: Suggest prefix cannot be empty.\n";
+                cout << rang::fg::yellow << "\n[!] " << rang::style::reset << "Error: Suggest prefix cannot be empty.\n";
                 return;
             }
 
             auto suggestions {engine.suggest(prefix, 5)};
-            if (suggestions.empty()) {
-                cout << "No suggestions found for prefix: " << prefix << "\n";
-                return;
+            cout    << rang::fg::green << "\n[INFO] " << rang::style::reset << "Autocomplete Suggestions for prefix: \"" << rang::style::bold << prefix << rang::style::reset << "\"\n"
+                    << "--------------------------------------------------\n";
+
+            if (suggestions.empty())
+                cout << "  No suggestions found for prefix.\n";
+
+            else {
+                for (auto i {0}; i < suggestions.size(); ++i) {
+                    const auto& pair {suggestions[i]};
+
+                    cout    << "  " << rang::fgB::cyan << (i + 1) << "." << rang::style::reset << " " << pair.first 
+                            << "  " << rang::fg::green << "(freq: " << pair.second << ")" << rang::style::reset << "\n";
+                }
             }
 
-            for (auto i {0}; i < suggestions.size(); ++i) {
-                const auto& pair {suggestions[i]};
-                cout << "  " << pair.first << "    (" << pair.second << ")\n";
-            }
+            cout << "--------------------------------------------------\n";
         }
 
         // helper to parse and execute the fuzzy match command
         void handleFuzzy(const string& term) 
         {
             if (term.empty()) {
-                cout << "[!] Error: Fuzzy term cannot be empty.\n";
+                cout << rang::fg::yellow << "\n[!] " << rang::style::reset << "Error: Fuzzy term cannot be empty.\n";
                 return;
             }
 
             string bestMatch {"lib"};
             int    distance  {0};
 
+            cout    << rang::fg::green << "\n[INFO] " << rang::style::reset << "Spell Check / Fuzzy Search for: \"" << rang::style::bold << term << rang::style::reset << "\"\n"
+                    << "--------------------------------------------------\n";
+
             if (engine.fuzzyMatch(term, bestMatch, distance, 3)) {
                 if (!distance) 
-                    cout << "Exact match found: " << term << " (distance 0)\n";
-                
+                    cout << "  Exact match found: " << rang::fgB::cyan << term << rang::style::reset << " (distance 0)\n";
                 else 
-                    cout << "Did you mean: " << bestMatch << " (distance " << distance << ")\n";
+                    cout << "  Did you mean: " << rang::fgB::cyan << bestMatch << rang::style::reset << " (distance " << distance << ")\n";
             } 
 
-            else 
-                cout << "No close matches found for: " << term << "\n";                             // ie distance > maxTolerance
+            else
+                cout << "  No close matches found for: " << term << "\n";
+
+            cout << "--------------------------------------------------\n";
         }
 
         void printIndexStats(const int fileCount, const size_t totalTokens, const size_t uniqueTerms, const double elapsedSeconds) {
             cout    << rang::fg::green << "\n[INFO] " << rang::style::reset 
-                    
                     << "Indexing completed successfully!\n"
+
                     << "--------------------------------------------------\n"
                     << "  " << rang::fgB::cyan << "Files Indexed" << rang::style::reset << " : " << fileCount   << "\n"
                     << "  " << rang::fgB::cyan << "Total Tokens " << rang::style::reset << " : " << totalTokens << "\n"
@@ -141,16 +164,15 @@ class CLI
             if (cmd == "index") 
             {
                 if (args.empty()) {
-                    cout << "[!] Error: Missing directory path. Usage: index <path>\n";
+                    cout << rang::fg::yellow << "[!] " << rang::style::reset << "Error: Missing directory path. Usage: index <path>\n";
                 }
                 
                 else {
-                    cout << "Reading files from: " << args << "...\n";
+                    cout << rang::fg::green << "[INFO] " << rang::style::reset << "Reading files from: " << rang::style::bold << args << rang::style::reset << "...\n";
                     auto stats {engine.initialize(args)};
 
                     if (!stats.fileCount) 
-                        cout << "[!] Error: No documents found or failed to load directory.\n";
-
+                        cout << rang::fg::yellow << "[!] " << rang::style::reset << "Error: No documents found or failed to load directory.\n";
                     else
                         printIndexStats(stats.fileCount, stats.totalTokens, stats.uniqueTerms, stats.elapsedSeconds);
                 }
@@ -173,13 +195,18 @@ class CLI
 
             // stats
             else if (cmd == "stats") {
-                cout << "Document Count: " << engine.getDocumentCount() << "\n";
-                cout << "Unique Terms:   " << engine.getUniqueTermCount() << "\n";
-            } 
+                cout    << rang::fg::green << "\n[INFO] " << rang::style::reset 
+                        << "Corpus & Engine Statistics\n"
+
+                        << "--------------------------------------------------\n"
+                        << "  " << rang::fgB::cyan << "Document Count" << rang::style::reset << " : " << engine.getDocumentCount()   << "\n"
+                        << "  " << rang::fgB::cyan << "Unique Terms  " << rang::style::reset << " : " << engine.getUniqueTermCount() << "\n"
+                        << "--------------------------------------------------\n";
+            }
 
             // exit
             else if (cmd == "quit" || cmd == "exit") {
-                cout << "Shutting down Lexica. Goodbye!\n";
+                cout << rang::fg::green << "Shutting down Lexica. Goodbye!\n" << rang::style::reset;
                 return false;
             } 
 
@@ -190,7 +217,10 @@ class CLI
 
             // invalid command
             else {
-                cout << "[!] Unknown command: '" << cmd << "'. Type 'help' for instructions.\n";
+                cout    << rang::fg::yellow  << "[!] " << rang::style::reset 
+                        << "Unknown command: '" 
+                        << rang::style::bold << cmd    << rang::style::reset 
+                        << "'. Type 'help' for instructions.\n";    
             }
 
             return true;
