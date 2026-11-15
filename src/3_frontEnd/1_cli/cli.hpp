@@ -223,6 +223,8 @@ class CLI
 
                 // dispatch command
                 if (!dispatchCommmand(cmd, args)) break;
+
+                cout << '\n';
             }
         }
 };
