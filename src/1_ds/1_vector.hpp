@@ -38,6 +38,32 @@ class MyVector
                 delete[] data;
             }
 
+        // copy contructor
+        MyVector(const MyVector& other) 
+            : vectorSize(other.vectorSize)
+            , capacity(other.capacity)
+            , data(new T[other.capacity]) 
+            {
+                for (auto i {0}; i < vectorSize; ++i)
+                    data[i] = other.data[i];
+            }
+
+        // copy assignment operator
+        MyVector& operator=(const MyVector& other) {
+            if (this == &other) return *this;
+            
+            delete[] data;
+
+            vectorSize = other.vectorSize;
+            capacity   = other.capacity;
+            data       = new T[capacity];
+            
+            for (auto i {0}; i < vectorSize; ++i)
+                data[i] = other.data[i];
+
+            return *this;
+        }
+
         // adds data to the back
         inline void push_back(const T& val) {
             if (vectorSize >= capacity)
