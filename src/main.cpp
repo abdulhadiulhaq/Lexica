@@ -1,29 +1,49 @@
-#include <iostream>
-#include "3_frontEnd/1_cli/cli.hpp"
-#include "3_frontEnd/2_webGUI/gui.hpp"
+#include <iostream>                                     // for cout
+#include "3_frontEnd/1_cli/cli.hpp"                     // for CLI
+#include "3_frontEnd/2_webGUI/gui.hpp"                  // for GUI
 using std::cout;
 
 
 int main(int argc, char* argv[]) 
 {
-    if (argc == 0){
-        CLI cli;
-        cli.run();
-    }
-    else if (argc == 1){
-        if (argv[1] == "--cli"){
+    switch(argc)
+    {
+        case 1:                                                 // zero flags provided; defaults to the cli version if no flags are provided
+        {
             CLI cli;
             cli.run();
+
+            return 0;
         }
-        else if (argv[1] == "--gui"){
-            GUI gui;
-            gui.run();
+
+        case 2:                                                 // one flag provided
+        {
+            if (argv[1] == "--cli") {
+                CLI cli;
+                cli.run();
+            } 
+
+            else if (argv[1] == "--gui") {
+                GUI gui;
+                gui.run();
+            } 
+
+            else {
+                cout    << "[!] Invalid flag: " << argv[1] << "\n"
+                        << "Usage: ./lexica [--cli | --gui]\n";
+
+                return 1;
+            }
+
+            return 0;
         }
-        else{
-            cout << "[!] Invalid flag.\n";
+
+        default:                                                // >= 2 arguments provided
+        {
+            cout    << "[!] Invalid number of arguments.\n"
+                    << "Usage: ./lexica [--cli | --gui]\n";
+
+            return 1;
         }
-    }
-    else{
-        cout << "[!] Invalid number of commands.\n";
     }
 }
