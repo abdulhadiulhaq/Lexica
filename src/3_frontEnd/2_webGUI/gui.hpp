@@ -18,14 +18,11 @@ class GUI
         // helper to escape special characters for valid JSON output
         static string escapeJson(const string& input);
 
-        // helper to open the local URL in the user's default browser
-        static void openBrowser(const string& url);
-
     public:
         GUI(const string& staticDir = "../src/3_frontEnd/2_webGUI/web", 
             const string& dataDir   = "../data/sample", 
             int serverPort          = 8080);
 
-        // initializes the corpus, launches the browser, and starts the local HTTP server
+        // initializes the corpus and starts the local HTTP server
         void run();
 };

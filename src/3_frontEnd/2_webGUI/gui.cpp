@@ -3,9 +3,6 @@
 #include <iostream>
 #include <sstream>
 #include <filesystem>
-#include <thread>
-#include <chrono>
-#include <cstdlib>
 
 namespace fs = std::filesystem;
 using std::cout, std::cerr, std::string;
@@ -36,20 +33,6 @@ string GUI::escapeJson(const string& input)
         }
     }
     return ss.str();
-}
-
-
-void GUI::openBrowser(const string& url) 
-{
-    #ifdef _WIN32
-        string cmd = "start \"\" \"" + url + "\"";
-    #elif __APPLE__
-        string cmd = "open \"" + url + "\"";
-    #else
-        string cmd = "xdg-open \"" + url + "\" >/dev/null 2>&1";
-    #endif
-
-    std::system(cmd.c_str());
 }
 
 
@@ -156,14 +139,6 @@ void GUI::run()
         res.set_content(json.str(), "application/json");
     });
 
-    // 4. Launch default browser and start blocking HTTP server
-    string url = "http://localhost:" + std::to_string(port);
-    cout << "Lexica Web GUI running at " << url << "\n";
-
-    std::thread([url]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        openBrowser(url);
-    }).detach();
-
+    cout << "Lexica Web GUI running at http://localhost:" << port << "\n";
     svr.listen("0.0.0.0", port);
 }
