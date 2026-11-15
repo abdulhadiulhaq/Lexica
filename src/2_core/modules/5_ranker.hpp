@@ -55,11 +55,11 @@ class Ranker
 
                 if (index.getPostings(term, postings)) 
                 {
-                    auto df {postings.size()};
-                    if (df == 0) continue;
+                    auto termFreq   {postings.size()};                              // getting the total num of occurances of the term/token in all the docs
+                    if  (!termFreq) continue;                                       // continue if no such term in the index
 
                     // IDF formula: ln(1 + (Total Docs / Document Frequency))
-                    auto idf {log(1.0 + (totalDocs / static_cast<double>(df)))};
+                    auto idf {log(1.0 + (totalDocs / static_cast<double>(termFreq)))};
 
                     for (auto j {0}; j < postings.size(); ++j) 
                     {
@@ -68,17 +68,17 @@ class Ranker
                         if ((p.docID >= 1) && (p.docID <= totalDocs)) 
                         {
                             auto tf {static_cast<double>(p.freq)};                  // getting tf: term frequency
-                            scores[p.docID] += (tf * idf);                          // calculating & storing tf * idf
+                            scores[p.docID] += (tf * idf);                          // calculating & storing tf * idf for that specific doc in scores
                         }
                     }
                 }
             }
 
             // collect all documents with a score > 0.0
-            for (auto id {1}; id <= totalDocs; ++id) {
-                if (scores[id] > 0.0) 
-                    results.push_back(SearchResult(id, scores[id]));
-            }
+                for (auto id {1}; id <= totalDocs; ++id) {
+                    if (scores[id] > 0.0) 
+                        results.push_back(SearchResult(id, scores[id]));
+                }
 
             delete[] scores;
 
