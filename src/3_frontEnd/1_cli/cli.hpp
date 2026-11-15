@@ -1,8 +1,10 @@
-#include <iostream>
-#include <string>
-#include <sstream>
-#include "../../2_core/engine.cpp"                  // Include the core Engine backend
-using std::string, std::cout, std::cin, std::endl;
+#pragma once
+
+
+#include <string>                                           // for string
+#include <iostream>                                         // for cout
+#include "../../2_core/engine.cpp"                          // for engine
+using std::cin, std::cout, std::string;
 
 
 // a command-line interface (CLI) frontend class for Lexica
@@ -14,64 +16,61 @@ class CLI
         // helper to print the help menu
         void printHelp() const 
         {
-            cout << "\nAvailable Commands:\n";
-            cout << "  index <path>                 - Load and index a directory of .txt files\n";
-            cout << "  suggest <prefix>             - Get autocomplete suggestions for a prefix\n";
-            cout << "  search <query> [-k <num>]    - Search the corpus using TF-IDF ranking\n";
-            cout << "  fuzzy <word>                 - Find spelling corrections using Levenshtein distance\n";
-            cout << "  stats                        - Display current corpus and indexing statistics\n";
-            cout << "  help                         - Show this help menu\n";
-            cout << "  quit (or exit)               - Exit Lexica CLI\n\n";
+            cout    << "\nAvailable Commands:\n"
+                    << "    index <path>                        - Load and index a directory of .txt files\n"
+                    << "    suggest <prefix>                    - Get autocomplete suggestions for a prefix\n"
+                    << "    search <query> [-k <num>]           - Search the corpus using TF-IDF ranking\n"
+                    << "    fuzzy <word>                        - Find spelling corrections using Levenshtein distance\n"
+                    << "    stats                               - Display current corpus and indexing statistics\n"
+                    << "    help                                - Show this help menu\n"
+                    << "    quit (or exit)                      - Exit Lexica CLI\n\n";
         }
 
         // helper to parse and execute the search command (supporting optional -k flag)
         void handleSearch(const string& args) 
         {
-            if (args.empty()) 
-            {
+            if (args.empty()) {
                 cout << "[!] Error: Search query cannot be empty.\n";
                 return;
             }
 
-            size_t topK {5};                                        // default top-k limit
+            size_t topK  {5};                                        // default top-k limit
             string query {args};
 
             // check if user specified a custom -k flag (e.g., "neural network -k 3")
-            auto kPos {args.find("-k")};
-            if (kPos != string::npos) 
-            {
-                query = args.substr(0, kPos);
-                string kStr {args.substr(kPos + 2)};
-                
-                // trim whitespace from query and kStr
-                while (!query.empty() && query.back() == ' ') query.pop_back();
-                while (!kStr.empty() && kStr.front() == ' ') kStr.erase(kStr.begin());
-
-                if (!kStr.empty()) 
+                auto kPos {args.find("-k")};
+                if (kPos != string::npos) 
                 {
-                    try {
-                        topK = std::stoul(kStr);
-                    } catch (...) {
-                        topK = 5;
+                    query = args.substr(0, kPos);
+                    string kStr {args.substr(kPos + 2)};
+                    
+                    // trim whitespace from query and kStr
+                    while (!query.empty() && query.back() == ' ') query.pop_back();
+                    while (!kStr.empty() && kStr.front() == ' ') kStr.erase(kStr.begin());
+
+                    if (!kStr.empty()) 
+                    {
+                        try {
+                            topK = std::stoul(kStr);
+                        } catch (...) {
+                            topK = 5;
+                        }
                     }
                 }
-            }
 
             bool cacheHit {false};
             auto results {engine.search(query, topK, cacheHit)};
 
-            cout << "Cache: " << (cacheHit ? "HIT" : "MISS") << "\n";
+            cout << "Cache: " << (cacheHit? "HIT" : "MISS") << "\n";
 
             if (results.empty()) 
-            {
                 cout << "No matching documents found.\n";
-            } 
-            else 
-            {
+
+            else {
                 for (auto i {0}; i < results.size(); ++i) 
                 {
                     const auto& res {results[i]};
-                    cout << "  " << (i + 1) << ". " << res.fileName << "     " << res.score << "\n";
+                    cout << "  " << (i + 1) << ". " << res.fileName << "     [" << res.score << "]\n";
                 }
             }
         }
@@ -79,21 +78,18 @@ class CLI
         // helper to parse and execute the suggest command
         void handleSuggest(const string& prefix) 
         {
-            if (prefix.empty()) 
-            {
+            if (prefix.empty()) {
                 cout << "[!] Error: Suggest prefix cannot be empty.\n";
                 return;
             }
 
             auto suggestions {engine.suggest(prefix, 5)};
-            if (suggestions.empty()) 
-            {
+            if (suggestions.empty()) {
                 cout << "No suggestions found for prefix: " << prefix << "\n";
                 return;
             }
 
-            for (auto i {0}; i < suggestions.size(); ++i) 
-            {
+            for (auto i {0}; i < suggestions.size(); ++i) {
                 const auto& pair {suggestions[i]};
                 cout << "  " << pair.first << "    (" << pair.second << ")\n";
             }
@@ -102,8 +98,7 @@ class CLI
         // helper to parse and execute the fuzzy match command
         void handleFuzzy(const string& term) 
         {
-            if (term.empty()) 
-            {
+            if (term.empty()) {
                 cout << "[!] Error: Fuzzy term cannot be empty.\n";
                 return;
             }
@@ -111,21 +106,16 @@ class CLI
             string bestMatch {"lib"};
             int    distance  {0};
 
-            if (engine.fuzzyMatch(term, bestMatch, distance, 3)) 
-            {
-                if (distance == 0) 
-                {
+            if (engine.fuzzyMatch(term, bestMatch, distance, 3)) {
+                if (!distance) 
                     cout << "Exact match found: " << term << " (distance 0)\n";
-                } 
+                
                 else 
-                {
                     cout << "Did you mean: " << bestMatch << " (distance " << distance << ")\n";
-                }
             } 
+
             else 
-            {
-                cout << "No close matches found for: " << term << "\n";
-            }
+                cout << "No close matches found for: " << term << "\n";                             // ie distance > maxTolerance
         }
 
     public:
@@ -135,10 +125,10 @@ class CLI
         // starts the interactive terminal loop
         void run() 
         {
-            cout << "========================================\n";
-            cout << "       LEXICA SEARCH ENGINE v1.0        \n";
-            cout << "========================================\n";
-            cout << "Type 'help' to see available commands.\n\n";
+            // cout << "========================================\n";
+            // cout << "       LEXICA SEARCH ENGINE v1.0        \n";
+            // cout << "========================================\n";
+            // cout << "Type 'help' to see available commands.\n\n";
 
             string line {""};
             while (true) 
@@ -225,12 +215,3 @@ class CLI
             }
         }
 };
-
-
-// --- CLI Entrypoint ---
-int main(int argc, char* argv[]) 
-{
-    CLI cli;
-    cli.run();
-    return 0;
-}
