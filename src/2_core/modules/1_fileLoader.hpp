@@ -17,6 +17,12 @@ struct Document
     string fileName;
     string content;
 
+    Document() 
+        : docID(0)
+        , fileName("")
+        , content("") 
+        {}
+
     Document(const int id, const string& name, const string& text) 
         : docID(id)
         , fileName(name)
@@ -48,7 +54,7 @@ class FileLoader
                         stringstream buffer;
                         buffer << file.rdbuf();                                             // reading the whole contents of the file at once
 
-                        Document doc(currentID++, entry.path().fileName().string(), buffer.str());
+                        Document doc(currentID++, entry.path().filename().string(), buffer.str());
                         documents.push_back(doc);
                     }
                 }
