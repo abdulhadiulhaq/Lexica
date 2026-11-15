@@ -2,8 +2,11 @@
 
 
 #include <string>                                           // for string
+#include <thread>                                           // for sleep_for
+#include <chrono>                                           // for milliseconds
 #include <iostream>                                         // for cout
 #include <algorithm>                                        // for min
+#include "include/rang.hpp"                                 // for namespace rang
 #include "../../2_core/engine.hpp"                          // for engine
 using std::cin, std::min, std::cout, std::string;
 
@@ -13,6 +16,7 @@ class CLI
 {
     private:
         Engine engine;
+        string programName;
 
         // helper to print the help menu
         void printHelp() const 
@@ -183,8 +187,21 @@ class CLI
             return true;
         }
 
+        void printProgramName(const int pauseDuration = 100){
+            cout << rang::fgB::green;
+
+            for (const auto& ch : (programName + "> ")){
+                cout << ch << std::flush;
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(pauseDuration));                    // sleep/pause for 100 ms
+            }
+
+            cout << rang::style::reset;
+        }
+
     public:
-        CLI() 
+        CLI(const string& programName = "Lexica") 
+            : programName(programName)
             {}
 
         // starts the interactive terminal loop
@@ -195,10 +212,13 @@ class CLI
             // cout << "========================================\n";
             // cout << "Type 'help' to see available commands.\n\n";
 
+            cout << "\n\n";
+
             string line {""};
+
             while (true) 
             {
-                cout << "lexica> ";
+                printProgramName(100);
 
                 if (!std::getline(cin, line)) break;
                 if (line.empty())             continue;
