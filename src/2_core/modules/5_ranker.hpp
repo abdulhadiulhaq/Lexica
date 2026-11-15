@@ -38,21 +38,15 @@ class Ranker
             {}
 
         // ranks documents against query tokens using TF-IDF and returns the top-k results
-        inline static MyVector<SearchResult> rankQuery(
-            const MyVector<string>& queryTokens,
-            const InvertedIndex& index,
-            size_t totalDocs,
-            size_t topK = 5) 
+        inline static MyVector<SearchResult> rankQuery(const MyVector<string>& queryTokens, const InvertedIndex& index, size_t totalDocs, size_t topK = 5) 
         {
             MyVector<SearchResult> results;
 
-            if (totalDocs == 0 || queryTokens.empty()) 
-            {
+            if (!totalDocs|| queryTokens.empty())                   // returns an empty results vector if totalDocs == 0 or the query is empty
                 return results;
-            }
 
             // allocate score accumulator array for all document IDs (1-indexed)
-            auto* scores {new double[totalDocs + 1]()};
+            auto scores {new double[totalDocs + 1]()};
 
             for (auto i {0}; i < queryTokens.size(); ++i) 
             {
@@ -65,54 +59,50 @@ class Ranker
                     if (df == 0) continue;
 
                     // IDF formula: ln(1 + (Total Docs / Document Frequency))
-                    auto idf {std::log(1.0 + (static_cast<double>(totalDocs) / static_cast<double>(df)))};
+                    auto idf {log(1.0 + (totalDocs / static_cast<double>(df)))};
 
                     for (auto j {0}; j < postings.size(); ++j) 
                     {
                         const auto& p {postings[j]};
 
-                        if (p.docID >= 1 && static_cast<size_t>(p.docID) <= totalDocs) 
+                        if ((p.docID >= 1) && (p.docID <= totalDocs)) 
                         {
-                            auto tf {static_cast<double>(p.termFreq)};
-                            scores[p.docID] += (tf * idf);
+                            auto tf {static_cast<double>(p.freq)};                  // getting tf: term frequency
+                            scores[p.docID] += (tf * idf);                          // calculating & storing tf * idf
                         }
                     }
                 }
             }
 
             // collect all documents with a score > 0.0
-            for (size_t id {1}; id <= totalDocs; ++id) 
-            {
+            for (auto id {1}; id <= totalDocs; ++id) {
                 if (scores[id] > 0.0) 
-                {
-                    results.push_back(SearchResult(static_cast<int>(id), scores[id]));
-                }
+                    results.push_back(SearchResult(id, scores[id]));
             }
 
             delete[] scores;
 
             // sort results descending by score using insertion sort
-            for (auto i {1}; i < results.size(); ++i) 
-            {
-                auto key {results[i]};
-                long long j = static_cast<long long>(i) - 1;
-
-                while (j >= 0 && results[j].score < key.score) 
+                for (auto i {1}; i < results.size(); ++i) 
                 {
-                    results[j + 1] = results[j];
-                    j--;
+                    auto key {results[i]};
+                    auto j   {i - 1};
+
+                    while ((j >= 0) && (results[j].score < key.score)) 
+                    {
+                        results[j + 1] = results[j];
+                        --j;
+                    }
+
+                    results[j + 1] = key;
                 }
-                results[j + 1] = key;
-            }
 
             // truncate to topK
-            MyVector<SearchResult> topResults;
-            auto limit {(results.size() < topK) ? results.size() : topK};
+                MyVector<SearchResult> topResults;
+                auto limit {std::min(results.size(), topK)};                // getting the lesser of the 2
 
-            for (auto i {0}; i < limit; ++i) 
-            {
-                topResults.push_back(results[i]);
-            }
+                for (auto i {0}; i < limit; ++i) 
+                    topResults.push_back(results[i]);
 
             return topResults;
         }
