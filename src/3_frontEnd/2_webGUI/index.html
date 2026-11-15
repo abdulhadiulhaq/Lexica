@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexica Search Engine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lexica<span>.</span></h1>
+            <p>High-Performance C++17 Search Engine & Data Structures Lab</p>
+        </header>
+
+        <div class="search-box-wrapper">
+            <div class="search-input-group">
+                <input type="text" id="searchInput" placeholder="Search neural network, AI history..." autocomplete="off">
+                <select id="topKSelect">
+                    <option value="3">Top 3</option>
+                    <option value="5" selected>Top 5</option>
+                    <option value="10">Top 10</option>
+                </select>
+                <button id="searchBtn">Search</button>
+            </div>
+            <div id="autocompleteDropdown" class="dropdown"></div>
+        </div>
+
+        <div id="fuzzyAlert" class="fuzzy-alert hidden"></div>
+
+        <div class="results-meta">
+            <span id="cacheBadge" class="badge hidden">Cache: HIT</span>
+            <span id="resultCount"></span>
+        </div>
+
+        <div id="resultsContainer" class="results-container">
+            <div class="placeholder-state">Type a query above to search the corpus</div>
+        </div>
+
+        <footer>
+            <div class="stats-panel">
+                <span>Indexed Docs: <strong id="statDocs">0</strong></span>
+                <span>Unique Terms: <strong id="statTerms">0</strong></span>
+            </div>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
