@@ -81,6 +81,14 @@ class MyVector
         }
 
         inline T* end() {
-            return (data + vectorSize);                              // ie &data[data.size()]
+            return (data + vectorSize);                            // ie &data[data.size()]
+        }
+
+        inline const T* begin() const {
+            return data;                                           // ie &data[0]
+        }
+
+        inline const T* end() const {
+            return (data + vectorSize);                            // ie &data[data.size()]
         }
 };
