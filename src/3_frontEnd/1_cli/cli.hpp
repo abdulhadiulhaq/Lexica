@@ -4,7 +4,7 @@
 #include <string>                                           // for string
 #include <iostream>                                         // for cout
 #include <algorithm>                                        // for min
-#include "../../2_core/engine.cpp"                          // for engine
+#include "../../2_core/engine.hpp"                          // for engine
 using std::cin, std::min, std::cout, std::string;
 
 
