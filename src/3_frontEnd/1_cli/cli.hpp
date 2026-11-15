@@ -118,6 +118,67 @@ class CLI
                 cout << "No close matches found for: " << term << "\n";                             // ie distance > maxTolerance
         }
 
+        void dispatchCommmand(const string& cmd, const string& args){
+            // index
+            if (cmd == "index") 
+            {
+                if (args.empty()) {
+                    cout << "[!] Error: Missing directory path. Usage: index <path>\n";
+                    return;
+                }
+
+                cout << "Reading files from: " << args << "...\n";
+                auto stats {engine.initialize(args)};
+
+                if (!stats.fileCount) 
+                    cout << "[!] Error: No documents found or failed to load directory.\n";
+
+                else {
+                    cout << "Indexed "       << stats.fileCount      << " files\n";
+                    cout << "Total tokens: " << stats.totalTokens    << "\n";
+                    cout << "Unique terms: " << stats.uniqueTerms    << "\n";
+                    cout << "Indexed in "    << stats.elapsedSeconds << " s\n";
+                }
+            } 
+    
+            // suggest
+            else if (cmd == "suggest") {
+                handleSuggest(args);
+            } 
+
+            // search
+            else if (cmd == "search") {
+                handleSearch(args);
+            } 
+
+            // fuzzy
+            else if (cmd == "fuzzy") {
+                handleFuzzy(args);
+            } 
+
+            // stats
+            else if (cmd == "stats") {
+                cout << "Document Count: " << engine.getDocumentCount() << "\n";
+                cout << "Unique Terms:   " << engine.getUniqueTermCount() << "\n";
+            } 
+
+            // exit
+            else if (cmd == "quit" || cmd == "exit") {
+                cout << "Shutting down Lexica. Goodbye!\n";
+                return;
+            } 
+
+            // help
+            else if (cmd == "help") {
+                printHelp();
+            } 
+
+            // invalid command
+            else {
+                cout << "[!] Unknown command: '" << cmd << "'. Type 'help' for instructions.\n";
+            }
+        }
+
     public:
         CLI() 
             {}
@@ -134,84 +195,30 @@ class CLI
             while (true) 
             {
                 cout << "lexica> ";
-                if (!std::getline(cin, line)) 
-                    break;
 
-                if (line.empty()) 
-                    continue;
+                if (!std::getline(cin, line)) break;
+                if (line.empty())             continue;
 
                 // parse command and arguments
-                string cmd {""};
-                string args {""};
-                auto spacePos {line.find(' ')};
+                    string cmd      {""};
+                    string args     {""};
+                    auto   spacePos {line.find(' ')};
 
-                if (spacePos == string::npos) 
-                {
-                    cmd = line;
-                } 
-                else 
-                {
-                    cmd  = line.substr(0, spacePos);
-                    args = line.substr(spacePos + 1);
-                    // trim leading spaces from args
-                    while (!args.empty() && args.front() == ' ') 
-                        args.erase(args.begin());
-                }
+                    if (spacePos == string::npos)                                       // if the cmd contains no spaces             
+                        cmd = line;
 
-                // dispatch command
-                if (cmd == "quit" || cmd == "exit") 
-                {
-                    cout << "Shutting down Lexica. Goodbye!\n";
-                    break;
-                } 
-                else if (cmd == "help") 
-                {
-                    printHelp();
-                } 
-                else if (cmd == "index") 
-                {
-                    if (args.empty()) 
-                    {
-                        cout << "[!] Error: Missing directory path. Usage: index <path>\n";
-                        continue;
-                    }
-
-                    cout << "Reading files from: " << args << "...\n";
-                    auto stats {engine.initialize(args)};
-
-                    if (stats.fileCount == 0) 
-                    {
-                        cout << "[!] Error: No documents found or failed to load directory.\n";
-                    } 
                     else 
                     {
-                        cout << "Indexed " << stats.fileCount << " files\n";
-                        cout << "Total tokens: " << stats.totalTokens << "\n";
-                        cout << "Unique terms: " << stats.uniqueTerms << "\n";
-                        cout << "Indexed in " << stats.elapsedSeconds << " s\n";
+                        cmd  = line.substr(0, spacePos);                                // the command, if valid, will be from the start of the line till before the first space char
+                        args = line.substr(spacePos + 1);                               // the args, if any, will be after the first space char
+
+                        // trim leading spaces from args
+                        while (!args.empty() && (args.front() == ' ')) 
+                            args.erase(args.begin());                                   // erase the first char
                     }
-                } 
-                else if (cmd == "suggest") 
-                {
-                    handleSuggest(args);
-                } 
-                else if (cmd == "search") 
-                {
-                    handleSearch(args);
-                } 
-                else if (cmd == "fuzzy") 
-                {
-                    handleFuzzy(args);
-                } 
-                else if (cmd == "stats") 
-                {
-                    cout << "Document Count: " << engine.getDocumentCount() << "\n";
-                    cout << "Unique Terms:   " << engine.getUniqueTermCount() << "\n";
-                } 
-                else 
-                {
-                    cout << "[!] Unknown command: '" << cmd << "'. Type 'help' for instructions.\n";
-                }
+
+                // dispatch command
+                dispatchCommmand(cmd, args);
             }
         }
 };
