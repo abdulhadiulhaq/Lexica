@@ -75,4 +75,12 @@ class MyVector
         inline void clear() {
             vectorSize = 0;                                        // only the vectorSize changes; the cap remains as is
         }
+
+        inline T* begin() {
+            return data;                                           // ie &data[0]
+        }
+
+        inline T* end() {
+            return (data + vectorSize);                              // ie &data[data.size()]
+        }
 };
